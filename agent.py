@@ -1,52 +1,33 @@
 import asyncio
 import os
 from dotenv import load_dotenv
-from textwrap import dedent
-
 from agno.agent import Agent
+from mcp_server_shell import ShellTool
 from agno.models.groq import Groq
-from agno.tools.mcp import MCPTools
-from mcp import StdioServerParameters
+from agno.db.sqlite import SqliteDb
 
 
-load_dotenv()
-LLM_MODEL = "llama-3.1-8b-instant"
+async def run_shell_agent()->None:
+    load_dotenv()
+    db = SqliteDb(db_file="tmp/agent_memory.db")
+    try:
+        print("Hi, I am a Git expert agent. How can I assist you today?")
+        while(True):
+            message=  input()
+            if(message.lower() in ["exit","quit"]):
+                print("Exiting the agent. Goodbye!")
+                break
+            agent = Agent(model= Groq(id="llama-3.1-8b-instant"),session_id="my session" ,db = db , add_history_to_context= True ,tools = [ShellTool], instructions="you are a git/github expert . you convert user's prompt into git commands which you then execute using ShellTool. PAT is loaded under GITHUB_KEY. And only use the tool given")
 
-github_server_params = StdioServerParameters(
-    command="npx",
-    args=["-y", "@modelcontextprotocol/server-github"],
-    env={
-        "GITHUB_TOKEN": os.getenv("GITHUB_TOKEN"), 
-        "PATH": os.getenv("PATH") # Essential for finding npx/node on Windows
-    }
-)
+            print(f"Agent is running with the custom Shell Executor tool...")
+            await agent.aprint_response(message, stream=True)
+            print("-" * 50)
+            
+    except Exception as e:
+        print(f"\nAn error occurred: {e}")
 
-# --- Agent Initialization ---
-async def run_git_agent(message: str) -> None:
-    async with MCPTools(server_params=github_server_params) as github_mcp_tools:
-        git_assistant = Agent(
-            model=Groq(id=LLM_MODEL),
-            tools=[github_mcp_tools], 
-            instructions=dedent(
-                """
-                You are a highly capable Git and GitHub assistant.
-                You can execute all standard Git/GitHub commands like pull, commit,
-                branch creation, and raising PRs.
-                - When the user asks for a Git/GitHub action, use your tools.
-                - Always be clear about the action you are taking.
-                """
-            ),
-            markdown=True,
-        )
 
-        print(f"User: {message}\n---")
-        await git_assistant.aprint_response(message, stream=True)
-        print("---\n")
 
 if __name__ == "__main__":
-    commands = [
-        "Clone from the 'main' branch of the agno-agi/agno repo.",
-    ]
-
-    for cmd in commands:
-        asyncio.run(run_git_agent(cmd))
+    
+    asyncio.run(run_shell_agent())
