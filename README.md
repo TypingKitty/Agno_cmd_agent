@@ -1,15 +1,16 @@
-# Agno Git Command Agent
+# Agno CommandLine Agent
 
-A command-line tool that converts **plain English instructions** into **Git commands** and executes them locally using Agno with Groq.
+A command-line tool that converts **plain English instructions** into **commandline prompts** and executes them locally using Agno with Groq.
 
 ---
 
 ## Features
 
-- Execute Git operations using natural language
+- Execute any commandline operations using natural language
 - Works as an interactive CLI
-- Supports common workflows like branching, committing, pulling, pushing, and syncing
+- Supports commands such as , clone any small flutter repo which uses mobile_scanner library or revert the last commit without reverting the changes
 - Uses environment variables for secure credentials
+- Retains previous interactions through an automatically created sqlite db.
 
 ---
 
